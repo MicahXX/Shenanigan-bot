@@ -1,8 +1,11 @@
+import os
 import asyncio
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 async def generate_outrageous_message():
     prompt = "Generate one short, ridiculous, outrageous, funny statement."
-
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(
         None,

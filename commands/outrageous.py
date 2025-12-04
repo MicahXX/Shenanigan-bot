@@ -10,9 +10,8 @@ class Outrageous(commands.Cog):
 
     @app_commands.command(
         name="outrageous",
-        description="Get a random outrageous statement",
+        description="Get a random outrageous statement"
     )
-    @commands.Cog.listener()
     async def outrageous(self, interaction: discord.Interaction):
         try:
             msg = await generate_outrageous_message()
@@ -20,7 +19,6 @@ class Outrageous(commands.Cog):
         except Exception as e:
             await interaction.response.send_message("Oops, something went wrong!")
             print("Error generating message:", e)
-
 
 
 async def setup(bot):
