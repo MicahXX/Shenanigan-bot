@@ -5,7 +5,7 @@ from ai import generate_outrageous_message
 
 def setup_tasks(bot):
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(hours=24)
     async def daily_outburst():
         await bot.wait_until_ready()
 
