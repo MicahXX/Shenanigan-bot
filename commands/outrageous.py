@@ -17,7 +17,7 @@ class Outrageous(commands.Cog):
             msg = await generate_outrageous_message()
             await interaction.response.send_message(msg)
         except Exception as e:
-            await interaction.response.send_message("Oops, something went wrong!")
+            await interaction.response.send_message("Failed to generate outrageous message!")
             print("Error generating message:", e)
 
 
