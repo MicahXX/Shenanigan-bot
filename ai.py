@@ -21,7 +21,7 @@ async def _run_prompt(prompt: str):
         lambda: client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=400,
+            max_tokens=4000,
         )
     )
     return response.choices[0].message.content
