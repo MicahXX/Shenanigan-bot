@@ -25,3 +25,7 @@ class DailyEnable(commands.Cog):
         save_settings(manager.settings)
 
         await interaction.response.send_message("Daily messages enabled for this server.")
+
+
+async def setup(bot):
+    await bot.add_cog(DailyEnable(bot))
