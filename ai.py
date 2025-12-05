@@ -50,9 +50,16 @@ async def _run_prompt(prompt: str):
         msg = msg[split_point:].lstrip()
     chunks.append(msg)
 
+    if len(chunks) == 1:
+        return chunks[0]
+
     return chunks
 
 
 def looks_like_code(text: str) -> bool:
-    code_keywords = ["class ", "def ", "{", "}", ";", "public ", "function ", "return "]
+    code_keywords = [
+        "class ", "def ", "{", "}", ";",
+        "public ", "function ", "return ",
+        "import ", "const ", "let ", "var "
+    ]
     return any(keyword in text for keyword in code_keywords)

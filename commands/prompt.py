@@ -16,12 +16,15 @@ class Prompt(commands.Cog):
     @app_commands.describe(text="The prompt you want to send to ChatGPT")
     async def prompt(self, interaction: discord.Interaction, text: str):
         try:
-            chunks = await generate_custom_prompt(text)
+            result = await generate_custom_prompt(text)
 
-            await interaction.response.send_message(chunks[0])
+            if isinstance(result, list):
+                await interaction.response.send_message(result[0])
+                for chunk in result[1:]:
+                    await interaction.followup.send(chunk)
 
-            for chunk in chunks[1:]:
-                await interaction.followup.send(chunk)
+            else:
+                await interaction.response.send_message(result)
 
         except Exception as e:
             await interaction.response.send_message("Failed to generate response.")
