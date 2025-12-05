@@ -18,9 +18,7 @@ async def _run_prompt(prompt: str):
     system_prompt = (
         "You are generating output for Discord. "
         "If the user asks for code, ALWAYS wrap it in triple backticks. "
-        "Never return partial markdown. "
-        "Always return clean, valid formatting. "
-        "Avoid broken code fences."
+        "Avoid broken markdown. Format cleanly."
     )
 
     loop = asyncio.get_event_loop()
@@ -36,18 +34,18 @@ async def _run_prompt(prompt: str):
         )
     )
 
-    msg = response.choices[0].message.content
-
-    if not isinstance(msg, str):
-        msg = str(msg)
+    msg = response.choices[0].message.content.strip()
 
     if "```" not in msg:
         msg = f"```\n{msg}\n```"
 
     chunks = []
     while len(msg) > 2900:
-        chunks.append(msg[:2900])
-        msg = msg[2900:]
+        split_point = msg.rfind("\n", 0, 2900)
+        if split_point == -1:
+            split_point = 2900
+        chunks.append(msg[:split_point])
+        msg = msg[split_point:].lstrip()
     chunks.append(msg)
 
     return chunks
