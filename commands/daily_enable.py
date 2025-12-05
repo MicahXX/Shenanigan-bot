@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from .daily_task import daily_task_manager, init_daily_task
+from tasks.daily_task import daily_task_manager, init_daily_task
 
 
 class DailyEnable(commands.Cog):
