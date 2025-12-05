@@ -44,7 +44,6 @@ class DailyTaskManager:
                 if not channel or not channel.permissions_for(guild.me).send_messages:
                     continue
 
-            # Strong anti-repeat memory block
             memory_block = (
                     "Below are your previous outputs. You MUST NOT repeat ANY of them.\n"
                     "You MUST generate something completely different in:\n"
