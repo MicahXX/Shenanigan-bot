@@ -45,9 +45,9 @@ async def _run_prompt(prompt: str):
         msg = f"```\n{msg}\n```"
 
     chunks = []
-    while len(msg) > 1900:
-        chunks.append(msg[:1900])
-        msg = msg[1900:]
+    while len(msg) > 2900:
+        chunks.append(msg[:2900])
+        msg = msg[2900:]
     chunks.append(msg)
 
     return chunks
