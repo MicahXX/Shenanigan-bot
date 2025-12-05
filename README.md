@@ -1,12 +1,13 @@
 # Shenanigan-bot
 
-A small Discord bot that uses ChatGPT to send an obscure / entertaining message every 24 hours (or on demand via a slash command). Built in Python. 
+A small Discord bot that uses ChatGPT to send an obscure / entertaining message every 24 hours (or on demand via a slash command) and the ability to prompt whenever with gpt-5.1-mini. Built in Python. 
 Add bot: https://discord.com/oauth2/authorize?client_id=1446220110363885578
 
 ## Features
 
 - Sends an automated "shenanigan" message once every 24 hours.
 - Responds to a slash command to generate an on-demand message via ChatGPT.
+- Responds to a slash cpmmand to answer an user prompt.
 - Modular structure with a commands folder to add more commands.
 - Simple task scheduler for recurring messages.
 
@@ -66,9 +67,6 @@ What the bot does after startup:
 - Loads extensions and scheduled tasks.
 - Sends out an automated "shenanigan" message once every 24 hours (implemented in `tasks.py`).
 - Responds to slash command(s) to generate an on-demand message via the AI helper.
-
-Example (if a slash command `/shenanigan` exists):
-- Type `/shenanigan` in the server where the bot is present to receive an immediate generated message.
 
 ## Development notes
 
