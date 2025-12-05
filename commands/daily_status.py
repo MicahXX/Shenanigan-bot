@@ -28,7 +28,7 @@ class DailyStatus(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="daily_status",
-        description="Check the daily message settings for this server"
+        description="Check the daily message settings for THIS server"
     )
     async def daily_status(self, interaction: discord.Interaction):
         manager = get_daily_task_manager(self.bot)
