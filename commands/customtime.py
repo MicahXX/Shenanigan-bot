@@ -96,7 +96,7 @@ class CustomTime(commands.Cog):
         readable = format_interval(hours)
 
         await interaction.response.send_message(
-            f"Daily interval set to **{readable}** (from `{time}`)."
+            f"Daily interval set to **{readable}**."
         )
 
 
