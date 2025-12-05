@@ -28,6 +28,7 @@ class DailyTaskManager:
 
             now = time.time()
 
+            # Not time yet
             if now - last_sent < interval * 3600:
                 continue
 
@@ -45,14 +46,33 @@ class DailyTaskManager:
                 if not channel or not channel.permissions_for(guild.me).send_messages:
                     continue
 
-            # Build memory-aware prompt
-            memory_block = "Previous messages:\n" + "\n".join(history[-5:]) + "\n\nDo NOT repeat any of them.\n\n"
+            memory_block = (
+                    "Here are your previous outputs. You MUST NOT repeat any of them, "
+                    "and you MUST generate something structurally different:\n"
+                    + "\n".join(history[-10:])
+                    + "\n\nRules:\n"
+                      "- Do NOT reuse the same answer.\n"
+                      "- Do NOT reuse the same structure.\n"
+                      "- Do NOT reuse the same logic.\n"
+                      "- Do NOT reuse the same riddle format.\n"
+                      "- Create something NEW and UNIQUE.\n"
+                      "- If previous ones were riddles, change the style.\n"
+                      "- If previous ones were short, make this one longer.\n"
+                      "- If previous ones used objects, use animals, concepts, or abstract ideas.\n"
+            )
 
+            # Build final prompt
             if prompt:
-                full_prompt = memory_block + f"Now respond to this prompt:\n{prompt}"
+                full_prompt = (
+                        memory_block +
+                        f"\nNow respond to this prompt in a completely new way:\n{prompt}"
+                )
                 msg = await generate_custom_prompt(full_prompt)
             else:
-                full_prompt = memory_block + "Generate something new."
+                full_prompt = (
+                        memory_block +
+                        "Generate something completely new and different."
+                )
                 msg = await generate_outrageous_message(full_prompt)
 
             # Send message
