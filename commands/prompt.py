@@ -27,7 +27,7 @@ class Prompt(commands.Cog):
                 await interaction.response.send_message(result)
 
         except Exception as e:
-            await interaction.response.send_message("Failed to generate response.")
+            await interaction.response.send_message("Failed to generate response (question made the answer too long).")
             print("Error generating custom prompt:", e)
 
 
