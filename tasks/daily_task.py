@@ -24,12 +24,14 @@ class DailyTaskManager:
             last_sent = settings.get("last_sent", 0)
             channel_id = settings.get("channel", None)
             random_mode = settings.get("random", True)
+            history = settings.get("history", [])
 
             now = time.time()
 
             if now - last_sent < interval * 3600:
                 continue
 
+            # Pick channel
             if random_mode or not channel_id:
                 channels = [
                     ch for ch in guild.text_channels
@@ -43,17 +45,31 @@ class DailyTaskManager:
                 if not channel or not channel.permissions_for(guild.me).send_messages:
                     continue
 
-            if prompt:
-                msg = await generate_custom_prompt(prompt)
-            else:
-                msg = await generate_outrageous_message()
+            # Build memory-aware prompt
+            memory_block = "Previous messages:\n" + "\n".join(history[-5:]) + "\n\nDo NOT repeat any of them.\n\n"
 
+            if prompt:
+                full_prompt = memory_block + f"Now respond to this prompt:\n{prompt}"
+                msg = await generate_custom_prompt(full_prompt)
+            else:
+                full_prompt = memory_block + "Generate something new."
+                msg = await generate_outrageous_message(full_prompt)
+
+            # Send message
             try:
                 await channel.send(msg)
             except Exception as e:
                 print(f"Could not send message to {guild.name}: {e}")
+                continue
 
+            # Update memory
+            history.append(msg)
+            settings["history"] = history[-10:]  # keep last 10 messages
+
+            # Update timestamp
             settings["last_sent"] = now
+
+            # Save
             self.settings[gid] = settings
             save_settings(self.settings)
 
