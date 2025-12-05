@@ -5,7 +5,7 @@ from discord.ext import commands
 from ai import generate_custom_prompt
 
 
-class Outrageous(commands.Cog):
+class Prompt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
