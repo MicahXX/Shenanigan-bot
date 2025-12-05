@@ -1,27 +1,60 @@
 import random
 from discord.ext import tasks
-from ai import generate_outrageous_message
+from ai import generate_custom_prompt, generate_outrageous_message
+from utils.json_store import load_settings, save_settings
+
 
 class DailyTaskManager:
     def __init__(self, bot):
         self.bot = bot
-        self.task = tasks.loop(hours=24)(self._run)
+        self.settings = load_settings()
+
+        self.task = tasks.loop(hours=1)(self._run)  # runs every hour, checks per-guild interval
 
     async def _run(self):
         await self.bot.wait_until_ready()
+
         for guild in self.bot.guilds:
+            gid = str(guild.id)
+
+            # Load guild settings
+            guild_settings = self.settings.get(gid, {})
+            interval = guild_settings.get("interval", 24)
+            prompt = guild_settings.get("prompt", None)
+
+            # Track last sent time
+            last_sent = guild_settings.get("last_sent", 0)
+
+            # Check if enough hours passed
+            import time
+            now = time.time()
+            if now - last_sent < interval * 3600:
+                continue
+
+            # Pick a channel
             channels = [
                 ch for ch in guild.text_channels
                 if ch.permissions_for(guild.me).send_messages
             ]
             if not channels:
                 continue
+
             channel = random.choice(channels)
-            msg = await generate_outrageous_message()
+
+            # Generate message
+            if prompt:
+                msg = await generate_custom_prompt(prompt)
+            else:
+                msg = await generate_outrageous_message()
+
             try:
                 await channel.send(msg)
             except Exception as e:
                 print(f"Could not send message to {guild.name}: {e}")
+
+            guild_settings["last_sent"] = now
+            self.settings[gid] = guild_settings
+            save_settings(self.settings)
 
     def start(self):
         if not self.task.is_running():
@@ -34,8 +67,23 @@ class DailyTaskManager:
     def is_running(self):
         return self.task.is_running()
 
+    def set_prompt(self, guild_id: int, prompt: str):
+        gid = str(guild_id)
+        if gid not in self.settings:
+            self.settings[gid] = {}
+        self.settings[gid]["prompt"] = prompt
+        save_settings(self.settings)
+
+    def set_interval(self, guild_id: int, hours: int):
+        gid = str(guild_id)
+        if gid not in self.settings:
+            self.settings[gid] = {}
+        self.settings[gid]["interval"] = hours
+        save_settings(self.settings)
+
 
 _daily_task_manager: DailyTaskManager | None = None
+
 
 def get_daily_task_manager(bot):
     global _daily_task_manager

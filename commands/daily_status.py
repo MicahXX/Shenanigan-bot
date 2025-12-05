@@ -12,15 +12,23 @@ class DailyStatus(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="daily_status",
-        description="Check if the daily message task is running"
+        description="Check the daily message settings"
     )
     async def daily_status(self, interaction: discord.Interaction):
         manager = get_daily_task_manager(self.bot)
+        gid = str(interaction.guild_id)
 
-        if manager.is_running():
-            await interaction.response.send_message("Daily messages are ON.")
-        else:
-            await interaction.response.send_message("Daily messages are OFF.")
+        settings = manager.settings.get(gid, {})
+        prompt = settings.get("prompt", "Default outrageous prompt")
+        interval = settings.get("interval", 24)
+        status = "ON" if manager.is_running() else "OFF"
+
+        await interaction.response.send_message(
+            f"**Daily Message Status for {interaction.guild.name}**\n"
+            f"Status: {status}\n"
+            f"Interval: Every **{interval} hours**\n"
+            f"Prompt: `{prompt}`"
+        )
 
 
 async def setup(bot):
