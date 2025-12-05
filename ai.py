@@ -6,8 +6,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 async def generate_outrageous_message():
-    prompt = "Generate one short, ridiculous, extremely outrageous statement."
-    return await _run_prompt(prompt)
+    return await _run_prompt("Generate one short, ridiculous, extremely outrageous statement.")
 
 
 async def generate_custom_prompt(user_prompt: str):
@@ -17,8 +16,9 @@ async def generate_custom_prompt(user_prompt: str):
 async def _run_prompt(prompt: str):
     system_prompt = (
         "You are generating output for Discord. "
-        "If the user asks for code, ALWAYS wrap it in triple backticks. "
-        "Avoid broken markdown. Format cleanly."
+        "If the user asks for code, wrap ONLY the code in triple backticks. "
+        "If the output is plain text, return plain text with NO code blocks. "
+        "Do not add formatting unless necessary."
     )
 
     loop = asyncio.get_event_loop()
@@ -36,13 +36,23 @@ async def _run_prompt(prompt: str):
 
     msg = response.choices[0].message.content.strip()
 
+    contains_code = "```" in msg
+
+    if not contains_code and looks_like_code(msg):
+        msg = f"```\n{msg}\n```"
+
     chunks = []
-    while len(msg) > 2900:
-        split_point = msg.rfind("\n", 0, 2900)
+    while len(msg) > 1900:
+        split_point = msg.rfind("\n", 0, 1900)
         if split_point == -1:
-            split_point = 2900
+            split_point = 1900
         chunks.append(msg[:split_point])
         msg = msg[split_point:].lstrip()
     chunks.append(msg)
 
     return chunks
+
+
+def looks_like_code(text: str) -> bool:
+    code_keywords = ["class ", "def ", "{", "}", ";", "public ", "function ", "return "]
+    return any(keyword in text for keyword in code_keywords)
