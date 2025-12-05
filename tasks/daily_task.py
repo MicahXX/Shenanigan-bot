@@ -54,15 +54,22 @@ class DailyTaskManager:
                     "- answer\n"
                     "- style\n"
                     "\nPrevious outputs:\n"
-                    + "\n".join(history[-100:])  # last 100 messages
+                    + "\n".join(history[-100:])
                     + "\n\nHard rules:\n"
                       "- Do NOT use the same answer.\n"
                       "- Do NOT use the same riddle structure.\n"
                       "- Do NOT use the same logic.\n"
                       "- Do NOT use the same theme.\n"
-                      "- Do NOT use classic riddles like 'echo', 'shadow', 'time', 'silence', etc.\n"
-                      "- Create something NEW, UNIQUE, and DIFFERENT.\n"
+                      "- You are NOT allowed to use ANY classic riddles.\n"
+                      "- You MUST invent a completely original riddle that does NOT appear in common riddle lists.\n"
+                      "- Forbidden themes include:\n"
+                      "  echoes, shadows, time, silence, wind, mouths without speaking, hearing without ears,\n"
+                      "  keys/keyboards, letters of the alphabet, clocks, nothingness, darkness, light,\n"
+                      "  fire, water, the future, the past, your name, your reflection, your shadow,\n"
+                      "  your breath, your heart, your mind, your thoughts, your age, your dreams.\n"
+                      "- Create something NEW, UNIQUE, and NEVER-BEFORE-SEEN.\n"
             )
+
 
             # Build final prompt
             if prompt:
