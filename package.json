@@ -1,0 +1,8 @@
+{
+  "engines": {
+    "python": "3.12"
+  },
+  "scripts": {
+    "build": "pip install -r requirements.txt && python bot.py"
+  }
+}
