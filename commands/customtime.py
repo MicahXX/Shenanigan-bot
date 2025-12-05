@@ -7,11 +7,6 @@ import re
 
 
 def parse_time_string(time_str: str) -> float:
-    """
-    Parse a time string like:
-    30s, 5m, 2h, 1d, 2h30m, 1d4h20m10s, etc.
-    Returns hours as float.
-    """
 
     pattern = r"(\d+\.?\d*)([smhd])"
     matches = re.findall(pattern, time_str.lower())
