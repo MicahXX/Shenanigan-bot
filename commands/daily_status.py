@@ -35,26 +35,29 @@ class DailyStatus(commands.Cog):
         gid = str(interaction.guild_id)
 
         settings = manager.settings.get(gid, {})
+
         enabled = settings.get("enabled", False)
         prompt = settings.get("prompt", "Default outrageous prompt")
         interval = settings.get("interval", 24)
-        random_mode = settings.get("random", True)
-        channel_id = settings.get("channel", None)
+
+        channel_mode = settings.get("channel_mode", "random")
+        channel_id = settings.get("channel_id", None)
 
         interval_text = format_interval(interval)
 
-        if random_mode:
+        if channel_mode == "random":
             channel_text = "Random channel"
         else:
             ch = interaction.guild.get_channel(channel_id)
             channel_text = ch.mention if ch else "Unknown channel"
 
         await interaction.response.send_message(
-            f"**Daily Message Status**\n"
-            f"Enabled: {'ON' if enabled else 'OFF'}\n"
-            f"Interval: **{interval_text}**\n"
-            f"Prompt: `{prompt}`\n"
-            f"Channel: {channel_text}"
+            f"**Daily Message Status for this Server**\n"
+            f"**Enabled:** {'ON' if enabled else 'OFF'}\n"
+            f"**Interval:** `{interval_text}`\n"
+            f"**Prompt:** `{prompt}`\n"
+            f"**Channel Mode:** `{channel_mode}`\n"
+            f"**Channel:** {channel_text}"
         )
 
 
