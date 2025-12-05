@@ -28,11 +28,9 @@ class DailyTaskManager:
 
             now = time.time()
 
-            # Not time yet
             if now - last_sent < interval * 3600:
                 continue
 
-            # Pick channel
             if random_mode or not channel_id:
                 channels = [
                     ch for ch in guild.text_channels
@@ -46,50 +44,45 @@ class DailyTaskManager:
                 if not channel or not channel.permissions_for(guild.me).send_messages:
                     continue
 
+            # Strong anti-repeat memory block
             memory_block = (
-                    "Here are your previous outputs. You MUST NOT repeat any of them, "
-                    "and you MUST generate something structurally different:\n"
-                    + "\n".join(history[-10:])
-                    + "\n\nRules:\n"
-                      "- Do NOT reuse the same answer.\n"
-                      "- Do NOT reuse the same structure.\n"
-                      "- Do NOT reuse the same logic.\n"
-                      "- Do NOT reuse the same riddle format.\n"
-                      "- Create something NEW and UNIQUE.\n"
-                      "- If previous ones were riddles, change the style.\n"
-                      "- If previous ones were short, make this one longer.\n"
-                      "- If previous ones used objects, use animals, concepts, or abstract ideas.\n"
+                    "Below are your previous outputs. You MUST NOT repeat ANY of them.\n"
+                    "You MUST generate something completely different in:\n"
+                    "- topic\n"
+                    "- structure\n"
+                    "- logic\n"
+                    "- answer\n"
+                    "- style\n"
+                    "\nPrevious outputs:\n"
+                    + "\n".join(history[-50:])
+                    + "\n\nHard rules:\n"
+                      "- Do NOT use the same answer.\n"
+                      "- Do NOT use the same riddle structure.\n"
+                      "- Do NOT use the same logic.\n"
+                      "- Do NOT use the same theme.\n"
+                      "- Do NOT use classic riddles like 'echo', 'shadow', 'time', 'silence', etc.\n"
+                      "- Create something NEW, UNIQUE, and DIFFERENT.\n"
             )
 
-            # Build final prompt
             if prompt:
-                full_prompt = (
-                        memory_block +
-                        f"\nNow respond to this prompt in a completely new way:\n{prompt}"
-                )
+                full_prompt = memory_block + f"\nNow respond to this prompt:\n{prompt}"
                 msg = await generate_custom_prompt(full_prompt)
             else:
-                full_prompt = (
-                        memory_block +
-                        "Generate something completely new and different."
-                )
+                full_prompt = memory_block + "Generate something new."
                 msg = await generate_outrageous_message(full_prompt)
 
-            # Send message
             try:
                 await channel.send(msg)
             except Exception as e:
                 print(f"Could not send message to {guild.name}: {e}")
                 continue
 
-            # Update memory
+            # Save infinite history
             history.append(msg)
-            settings["history"] = history[-10:]  # keep last 10 messages
+            settings["history"] = history
 
-            # Update timestamp
             settings["last_sent"] = now
 
-            # Save
             self.settings[gid] = settings
             save_settings(self.settings)
 
