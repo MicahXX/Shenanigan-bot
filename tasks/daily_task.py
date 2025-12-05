@@ -31,6 +31,7 @@ class DailyTaskManager:
             if now - last_sent < interval * 3600:
                 continue
 
+            # Pick channel
             if random_mode or not channel_id:
                 channels = [
                     ch for ch in guild.text_channels
@@ -53,7 +54,7 @@ class DailyTaskManager:
                     "- answer\n"
                     "- style\n"
                     "\nPrevious outputs:\n"
-                    + "\n".join(history[-50:])
+                    + "\n".join(history[-100:])  # last 100 messages
                     + "\n\nHard rules:\n"
                       "- Do NOT use the same answer.\n"
                       "- Do NOT use the same riddle structure.\n"
@@ -63,6 +64,7 @@ class DailyTaskManager:
                       "- Create something NEW, UNIQUE, and DIFFERENT.\n"
             )
 
+            # Build final prompt
             if prompt:
                 full_prompt = memory_block + f"\nNow respond to this prompt:\n{prompt}"
                 msg = await generate_custom_prompt(full_prompt)
@@ -70,18 +72,21 @@ class DailyTaskManager:
                 full_prompt = memory_block + "Generate something new."
                 msg = await generate_outrageous_message(full_prompt)
 
+            # Send message
             try:
                 await channel.send(msg)
             except Exception as e:
                 print(f"Could not send message to {guild.name}: {e}")
                 continue
 
-            # Save infinite history
+            # Save only last 100 messages
             history.append(msg)
-            settings["history"] = history
+            settings["history"] = history[-100:]
 
+            # Update timestamp
             settings["last_sent"] = now
 
+            # Save settings
             self.settings[gid] = settings
             save_settings(self.settings)
 
