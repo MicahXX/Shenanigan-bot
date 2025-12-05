@@ -3,6 +3,7 @@
     "python": "3.12"
   },
   "scripts": {
-    "build": "pip install -r requirements.txt && python bot.py"
+    "build": "pip install -r requirements.txt",
+    "start": "python bot.py"
   }
 }
