@@ -36,9 +36,6 @@ async def _run_prompt(prompt: str):
 
     msg = response.choices[0].message.content.strip()
 
-    if "```" not in msg:
-        msg = f"```\n{msg}\n```"
-
     chunks = []
     while len(msg) > 2900:
         split_point = msg.rfind("\n", 0, 2900)
