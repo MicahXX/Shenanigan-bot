@@ -10,5 +10,5 @@ async def load_extensions(bot):
             print("Loading extension:", module)
             await bot.load_extension(module)
 
-    from commands.tasks import setup_tasks
+    from tasks import setup_tasks
     setup_tasks(bot)
