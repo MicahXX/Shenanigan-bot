@@ -12,7 +12,7 @@ class DailyStatus(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="daily_status",
-        description="Check if the daily task is running"
+        description="Check if the daily message task is running"
     )
     async def daily_status(self, interaction: discord.Interaction):
         manager = get_daily_task_manager(self.bot)

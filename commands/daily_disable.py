@@ -11,7 +11,7 @@ class DailyDisable(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="daily_disable",
-        description="Disable the daily outrageous message task"
+        description="Disable the daily outrageous message"
     )
     async def daily_disable(self, interaction: discord.Interaction):
         manager = get_daily_task_manager(self.bot)
