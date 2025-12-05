@@ -12,7 +12,7 @@ class CustomTime(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="customtime",
-        description="Set how often the daily message runs (in hours)"
+        description="Set how often the daily message runs (in hours, default: 24)"
     )
     async def customtime(self, interaction: discord.Interaction, hours: int):
         if hours < 1:

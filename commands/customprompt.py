@@ -12,14 +12,14 @@ class CustomPrompt(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="customprompt",
-        description="Set the custom daily prompt"
+        description="Set an custom daily prompt (default: outrageous message)"
     )
     async def customprompt(self, interaction: discord.Interaction, prompt: str):
         manager = get_daily_task_manager(self.bot)
         manager.set_prompt(interaction.guild_id, prompt)
 
         await interaction.response.send_message(
-            f"Custom daily prompt set to:\n{prompt}"
+            f"Custom daily prompt set to: {prompt}"
         )
 
 
