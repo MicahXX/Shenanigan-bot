@@ -7,7 +7,7 @@ Add bot: https://discord.com/oauth2/authorize?client_id=1446220110363885578
 
 - Sends an automated "shenanigan" message once every 24 hours.
 - Responds to a slash command to generate an on-demand message via ChatGPT.
-- Responds to a slash cpmmand to answer an user prompt.
+- Responds to a slash command to answer an user prompt.
 - Modular structure with a commands folder to add more commands.
 - Simple task scheduler for recurring messages.
 
