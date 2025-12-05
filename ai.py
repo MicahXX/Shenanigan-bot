@@ -15,13 +15,39 @@ async def generate_custom_prompt(user_prompt: str):
 
 
 async def _run_prompt(prompt: str):
+    system_prompt = (
+        "You are generating output for Discord. "
+        "If the user asks for code, ALWAYS wrap it in triple backticks. "
+        "Never return partial markdown. "
+        "Always return clean, valid formatting. "
+        "Avoid broken code fences."
+    )
+
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(
         None,
         lambda: client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=400,
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=600,
         )
     )
-    return response.choices[0].message.content
+
+    msg = response.choices[0].message.content
+
+    if not isinstance(msg, str):
+        msg = str(msg)
+
+    if "```" not in msg:
+        msg = f"```\n{msg}\n```"
+
+    chunks = []
+    while len(msg) > 1900:
+        chunks.append(msg[:1900])
+        msg = msg[1900:]
+    chunks.append(msg)
+
+    return chunks
