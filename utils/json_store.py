@@ -1,7 +1,7 @@
 import json
 import os
 
-PATH = "data/daily_settings.json"
+PATH = "/data/daily_settings.json"
 
 
 def load_settings():
