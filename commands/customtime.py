@@ -12,18 +12,19 @@ class CustomTime(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
         name="customtime",
-        description="Set how often the daily message runs (in hours, default: 24)"
+        description="Set how often the daily message runs (in hours, can be decimal)"
     )
-    async def customtime(self, interaction: discord.Interaction, hours: int):
-        if hours < 1:
-            await interaction.response.send_message("❌ Hours must be at least 1.")
+    @app_commands.describe(hours="Example: 0.5 = 30 minutes, 2.5 = 2h 30m")
+    async def customtime(self, interaction: discord.Interaction, hours: float):
+        if hours <= 0:
+            await interaction.response.send_message("Time must be greater than 0.")
             return
 
         manager = get_daily_task_manager(self.bot)
         manager.set_interval(interaction.guild_id, hours)
 
         await interaction.response.send_message(
-            f"Daily interval set to {hours} hour(s)."
+            f"Daily interval set to **{hours} hour(s)**."
         )
 
 
