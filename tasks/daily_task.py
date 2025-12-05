@@ -18,25 +18,23 @@ class DailyTaskManager:
         for guild in self.bot.guilds:
             gid = str(guild.id)
 
-            # Load guild settings
             guild_settings = self.settings.get(gid, {})
+
+            if not guild_settings.get("enabled", False):
+                continue
+
             interval = guild_settings.get("interval", 24)
             prompt = guild_settings.get("prompt", None)
             random_mode = guild_settings.get("random", True)
             channel_id = guild_settings.get("channel", None)
-
-            # Memory (last 100 messages)
             history = guild_settings.get("history", [])
 
-            # Track last sent time
             last_sent = guild_settings.get("last_sent", 0)
             now = time.time()
 
-            # Check interval
             if now - last_sent < interval * 3600:
                 continue
 
-            # Pick channel
             if random_mode or not channel_id:
                 channels = [
                     ch for ch in guild.text_channels
@@ -50,7 +48,6 @@ class DailyTaskManager:
                 if not channel or not channel.permissions_for(guild.me).send_messages:
                     continue
 
-            # Build memory block
             memory_block = (
                     "Below are your previous outputs. You MUST NOT repeat ANY of them.\n"
                     "You MUST generate something completely different in:\n"
@@ -74,7 +71,6 @@ class DailyTaskManager:
                       "- Create something NEW, UNIQUE, and NEVER-BEFORE-SEEN.\n"
             )
 
-            # Build final prompt
             if prompt:
                 full_prompt = memory_block + f"\nNow respond to this prompt:\n{prompt}"
                 msg = await generate_custom_prompt(full_prompt)
@@ -82,20 +78,16 @@ class DailyTaskManager:
                 full_prompt = memory_block + "Generate something new."
                 msg = await generate_outrageous_message(full_prompt)
 
-            # Send message
             try:
                 await channel.send(msg)
             except Exception as e:
                 print(f"Could not send message to {guild.name}: {e}")
 
-            # Save memory (last 100)
             history.append(msg)
             guild_settings["history"] = history[-100:]
 
-            # Save timestamp
             guild_settings["last_sent"] = now
 
-            # Save settings
             self.settings[gid] = guild_settings
             save_settings(self.settings)
 
@@ -134,7 +126,6 @@ class DailyTaskManager:
 
 
 _daily_task_manager: DailyTaskManager | None = None
-
 
 def get_daily_task_manager(bot):
     global _daily_task_manager
