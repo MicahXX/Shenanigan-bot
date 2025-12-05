@@ -23,7 +23,7 @@ class CustomTime(commands.Cog):
         manager.set_interval(interaction.guild_id, hours)
 
         await interaction.response.send_message(
-            f"Daily interval set to {hours} hours."
+            f"Daily interval set to {hours} hour(s)."
         )
 
 

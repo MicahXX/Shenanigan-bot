@@ -42,10 +42,10 @@ async def _run_prompt(prompt: str):
         msg = f"```\n{msg}\n```"
 
     chunks = []
-    while len(msg) > 2900:
-        split_point = msg.rfind("\n", 0, 2900)
+    while len(msg) > 1900:
+        split_point = msg.rfind("\n", 0, 1900)
         if split_point == -1:
-            split_point = 2900
+            split_point = 1900
         chunks.append(msg[:split_point])
         msg = msg[split_point:].lstrip()
     chunks.append(msg)
