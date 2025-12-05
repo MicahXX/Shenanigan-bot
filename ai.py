@@ -19,7 +19,7 @@ async def _run_prompt(prompt: str):
     response = await loop.run_in_executor(
         None,
         lambda: client.chat.completions.create(
-            model="gpt-5.1-mini",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=200,
         )
