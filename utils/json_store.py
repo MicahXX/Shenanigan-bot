@@ -3,8 +3,9 @@ import os
 
 PATH = "/data/daily_settings.json"
 
-
 def load_settings():
+    os.makedirs(os.path.dirname(PATH), exist_ok=True)
+
     if not os.path.exists(PATH):
         return {}
 
@@ -13,7 +14,6 @@ def load_settings():
             return json.load(f)
         except json.JSONDecodeError:
             return {}
-
 
 def save_settings(data: dict):
     os.makedirs(os.path.dirname(PATH), exist_ok=True)
