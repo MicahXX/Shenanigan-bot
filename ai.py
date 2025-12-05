@@ -6,7 +6,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 async def generate_outrageous_message():
-    prompt = "Generate one short, ridiculous, extremely outrageous, funny statement."
+    prompt = "Generate one short, ridiculous, extremely outrageous statement."
     return await _run_prompt(prompt)
 
 
@@ -19,7 +19,7 @@ async def _run_prompt(prompt: str):
     response = await loop.run_in_executor(
         None,
         lambda: client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.1-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=200,
         )
