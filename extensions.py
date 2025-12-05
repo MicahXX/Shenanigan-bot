@@ -1,5 +1,5 @@
 import os
-import importlib
+
 
 async def load_extensions(bot):
 
@@ -10,5 +10,5 @@ async def load_extensions(bot):
             print("Loading extension:", module)
             await bot.load_extension(module)
 
-    from tasks import setup_tasks
+    from commands.tasks import setup_tasks
     setup_tasks(bot)
