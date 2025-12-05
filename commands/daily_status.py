@@ -1,24 +1,37 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+
 from tasks.daily_task import get_daily_task_manager
 
 
 def format_interval(hours: float) -> str:
+
     total_seconds = int(hours * 3600)
+
     days = total_seconds // 86400
     total_seconds %= 86400
+
     h = total_seconds // 3600
     total_seconds %= 3600
+
     m = total_seconds // 60
     s = total_seconds % 60
 
     parts = []
-    if days > 0: parts.append(f"{days}d")
-    if h > 0: parts.append(f"{h}h")
-    if m > 0: parts.append(f"{m}m")
-    if s > 0: parts.append(f"{s}s")
-    return " ".join(parts) if parts else "0s"
+    if days > 0:
+        parts.append(f"{days}d")
+    if h > 0:
+        parts.append(f"{h}h")
+    if m > 0:
+        parts.append(f"{m}m")
+    if s > 0:
+        parts.append(f"{s}s")
+
+    if not parts:
+        return "0s"
+
+    return " ".join(parts)
 
 
 class DailyStatus(commands.Cog):
@@ -35,7 +48,6 @@ class DailyStatus(commands.Cog):
         gid = str(interaction.guild_id)
 
         settings = manager.settings.get(gid, {})
-        enabled = settings.get("enabled", False)
         prompt = settings.get("prompt", "Default outrageous prompt")
         interval = settings.get("interval", 24)
         random_mode = settings.get("random", True)
@@ -46,13 +58,15 @@ class DailyStatus(commands.Cog):
         if random_mode:
             channel_text = "Random channel"
         else:
-            ch = interaction.guild.get_channel(channel_id)
-            channel_text = ch.mention if ch else "Unknown channel"
+            channel_obj = interaction.guild.get_channel(channel_id)
+            channel_text = channel_obj.mention if channel_obj else "Unknown channel"
+
+        status = "ON" if manager.is_running() else "OFF"
 
         await interaction.response.send_message(
             f"**Daily Message Status**\n"
-            f"Enabled: {'ON' if enabled else 'OFF'}\n"
-            f"Interval: **{interval_text}**\n"
+            f"Status: {status}\n"
+            f"Interval: Every **{interval_text}**\n"
             f"Prompt: `{prompt}`\n"
             f"Channel: {channel_text}"
         )

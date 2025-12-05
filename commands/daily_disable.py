@@ -25,7 +25,3 @@ class DailyDisable(commands.Cog):
         save_settings(manager.settings)
 
         await interaction.response.send_message("Daily messages disabled for this server.")
-
-
-async def setup(bot):
-    await bot.add_cog(DailyDisable(bot))
