@@ -10,8 +10,7 @@ class DailyTaskManager:
         self.bot = bot
         self.settings = load_settings()
 
-        # Runs every hour, checks per-guild interval
-        self.task = tasks.loop(hours=1)(self._run)
+        self.task = tasks.loop(seconds=20)(self._run)
 
     async def _run(self):
         await self.bot.wait_until_ready()
@@ -31,7 +30,6 @@ class DailyTaskManager:
             if now - last_sent < interval * 3600:
                 continue
 
-            # Determine channel
             if random_mode or not channel_id:
                 channels = [
                     ch for ch in guild.text_channels
@@ -45,7 +43,6 @@ class DailyTaskManager:
                 if not channel or not channel.permissions_for(guild.me).send_messages:
                     continue
 
-            # Generate message
             if prompt:
                 msg = await generate_custom_prompt(prompt)
             else:
@@ -78,7 +75,7 @@ class DailyTaskManager:
         self.settings[gid]["prompt"] = prompt
         save_settings(self.settings)
 
-    def set_interval(self, guild_id: int, hours: int):
+    def set_interval(self, guild_id: int, hours: float):
         gid = str(guild_id)
         if gid not in self.settings:
             self.settings[gid] = {}
