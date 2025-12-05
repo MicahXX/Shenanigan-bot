@@ -20,6 +20,23 @@ Add bot: https://discord.com/oauth2/authorize?client_id=1446220110363885578
 - `commands/` — Directory for command modules (slash commands).
 - `requirements.txt` — Python dependencies.
 
+## Slash Commands
+
+**/outrageous**  
+Get an outrageous, funny, or wild AI-generated message from the bot.
+
+**/prompt [your prompt]**  
+Use ChatGPT to answer your custom prompt, gpt-4o.
+
+**/daily_enable**  
+Enable the daily automated message in the current server.
+
+**/daily_disable**  
+Disable the daily automated message in the current server.
+
+**/daily_status**  
+Check whether the daily automated message is enabled in your server.
+
 ## Prerequisites
 
 - Python 3.10+ recommended
