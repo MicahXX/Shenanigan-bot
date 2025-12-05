@@ -1,4 +1,5 @@
 import random
+import time
 from discord.ext import tasks
 from ai import generate_custom_prompt, generate_outrageous_message
 from utils.json_store import load_settings, save_settings
@@ -17,16 +18,15 @@ class DailyTaskManager:
         for guild in self.bot.guilds:
             gid = str(guild.id)
 
-            # Load guild settings
             guild_settings = self.settings.get(gid, {})
+            enabled = guild_settings.get("enabled", False)
+            if not enabled:
+                continue
+
             interval = guild_settings.get("interval", 24)
             prompt = guild_settings.get("prompt", None)
-
-            # Track last sent time
             last_sent = guild_settings.get("last_sent", 0)
 
-            # Check if enough hours passed
-            import time
             now = time.time()
             if now - last_sent < interval * 3600:
                 continue
@@ -80,7 +80,7 @@ class DailyTaskManager:
         save_settings(self.settings)
 
 
-_daily_task_manager: DailyTaskManager | None = None
+_daily_task_manager = None
 
 
 def get_daily_task_manager(bot):
