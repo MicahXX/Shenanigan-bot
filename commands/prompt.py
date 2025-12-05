@@ -25,4 +25,4 @@ class Prompt(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(Outrageous(bot))
+    await bot.add_cog(Prompt(bot))
