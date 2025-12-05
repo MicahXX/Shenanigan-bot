@@ -2,13 +2,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from tasks.daily_task import daily_task_manager, init_daily_task
+from tasks.daily_task import get_daily_task_manager
 
 
 class DailyStatus(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        init_daily_task(bot)
 
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
@@ -16,7 +15,9 @@ class DailyStatus(commands.Cog):
         description="Check if the daily task is running"
     )
     async def daily_status(self, interaction: discord.Interaction):
-        if daily_task_manager.is_running():
+        manager = get_daily_task_manager(self.bot)
+
+        if manager.is_running():
             await interaction.response.send_message("Daily messages are ON.")
         else:
             await interaction.response.send_message("Daily messages are OFF.")
