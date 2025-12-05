@@ -19,26 +19,38 @@ class DailyTaskManager:
             gid = str(guild.id)
 
             guild_settings = self.settings.get(gid, {})
+
             enabled = guild_settings.get("enabled", False)
             if not enabled:
                 continue
 
             interval = guild_settings.get("interval", 24)
+
             prompt = guild_settings.get("prompt", None)
+
             last_sent = guild_settings.get("last_sent", 0)
 
             now = time.time()
+
             if now - last_sent < interval * 3600:
                 continue
 
-            channels = [
-                ch for ch in guild.text_channels
-                if ch.permissions_for(guild.me).send_messages
-            ]
-            if not channels:
-                continue
+            channel_mode = guild_settings.get("channel_mode", "random")
+            fixed_channel_id = guild_settings.get("channel_id")
 
-            channel = random.choice(channels)
+            channel = None
+
+            if channel_mode == "fixed" and fixed_channel_id is not None:
+                channel = guild.get_channel(fixed_channel_id)
+
+            if channel is None:
+                channels = [
+                    ch for ch in guild.text_channels
+                    if ch.permissions_for(guild.me).send_messages
+                ]
+                if not channels:
+                    continue
+                channel = random.choice(channels)
 
             if prompt:
                 msg = await generate_custom_prompt(prompt)
@@ -49,10 +61,12 @@ class DailyTaskManager:
                 await channel.send(msg)
             except Exception as e:
                 print(f"Could not send message to {guild.name}: {e}")
+                continue
 
             guild_settings["last_sent"] = now
             self.settings[gid] = guild_settings
             save_settings(self.settings)
+
 
     def start(self):
         if not self.task.is_running():
@@ -72,15 +86,29 @@ class DailyTaskManager:
         self.settings[gid]["prompt"] = prompt
         save_settings(self.settings)
 
-    def set_interval(self, guild_id: int, hours: int):
+    def set_interval(self, guild_id: int, hours: float):
         gid = str(guild_id)
         if gid not in self.settings:
             self.settings[gid] = {}
         self.settings[gid]["interval"] = hours
         save_settings(self.settings)
 
+    def set_channel(self, guild_id: int, channel_id: int | None, random_mode: bool):
+        gid = str(guild_id)
+        if gid not in self.settings:
+            self.settings[gid] = {}
 
-_daily_task_manager = None
+        if random_mode:
+            self.settings[gid]["channel_mode"] = "random"
+            self.settings[gid]["channel_id"] = None
+        else:
+            self.settings[gid]["channel_mode"] = "fixed"
+            self.settings[gid]["channel_id"] = channel_id
+
+        save_settings(self.settings)
+
+
+_daily_task_manager: DailyTaskManager | None = None
 
 
 def get_daily_task_manager(bot):
