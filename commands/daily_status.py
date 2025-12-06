@@ -18,7 +18,7 @@ def format_interval(hours: float) -> str:
     if h > 0: parts.append(f"{h}h")
     if m > 0: parts.append(f"{m}m")
     if s > 0: parts.append(f"{s}s")
-    return " ".join(parts) if parts else "0s"
+    return "0s" if not parts else " ".join(parts)
 
 
 class DailyStatus(commands.Cog):
@@ -43,6 +43,8 @@ class DailyStatus(commands.Cog):
         channel_mode = settings.get("channel_mode", "random")
         channel_id = settings.get("channel_id", None)
 
+        uniqueness = settings.get("uniqueness_threshold", 0.6)
+
         interval_text = format_interval(interval)
 
         if channel_mode == "random":
@@ -57,7 +59,8 @@ class DailyStatus(commands.Cog):
             f"**Interval:** `{interval_text}`\n"
             f"**Prompt:** `{prompt}`\n"
             f"**Channel Mode:** `{channel_mode}`\n"
-            f"**Channel:** {channel_text}"
+            f"**Channel:** {channel_text}\n\n"
+            f"**Uniqueness Threshold:** `{uniqueness}`"
         )
 
 
