@@ -71,7 +71,7 @@ class CustomTime(commands.Cog):
 
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.command(
-        name="customtime",
+        name="daily_customtime",
         description="Set how often the daily message runs (supports s/m/h/d)"
     )
     @app_commands.describe(
