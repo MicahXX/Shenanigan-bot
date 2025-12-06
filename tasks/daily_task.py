@@ -2,7 +2,6 @@ import random
 import time
 import re
 import difflib
-from uuid import uuid4
 from discord.ext import tasks
 from ai import generate_custom_prompt, generate_outrageous_message
 from utils.json_store import load_settings, save_settings
@@ -15,6 +14,7 @@ class DailyTaskManager:
 
         for gid, data in self.settings.items():
             data.setdefault("recent_messages", [])
+            data.setdefault("recent_answers", [])
             data.setdefault("uniqueness_threshold", 0.6)
             data.setdefault("max_generation_attempts", 30)
 
@@ -30,28 +30,26 @@ class DailyTaskManager:
         t = re.sub(r'\s+', ' ', t).strip()
         return t
 
-    def _is_similar(self, a: str, b: str, threshold: float) -> bool:
-        na = self._normalize(a)
-        nb = self._normalize(b)
-
-        if not na or not nb:
-            return False
-
-        ratio = difflib.SequenceMatcher(None, na, nb).ratio()
-        return ratio >= threshold
-
     def _get_recent_messages(self, gid: str):
         return self.settings.get(gid, {}).get("recent_messages", [])
 
-    def _save_recent_message(self, gid: str, msg: str):
+    def _get_recent_answers(self, gid: str):
+        return self.settings.get(gid, {}).get("recent_answers", [])
+
+    def _save_recent_message(self, gid: str, msg: str, answer: str | None):
         if gid not in self.settings:
             self.settings[gid] = {}
 
         lst = self.settings[gid].setdefault("recent_messages", [])
         lst.append(msg)
-
         if len(lst) > 100:
             lst[:] = lst[-100:]
+
+        if answer:
+            ans_lst = self.settings[gid].setdefault("recent_answers", [])
+            ans_lst.append(answer)
+            if len(ans_lst) > 100:
+                ans_lst[:] = ans_lst[-100:]
 
         save_settings(self.settings)
 
@@ -59,6 +57,7 @@ class DailyTaskManager:
         gid = str(guild_id)
         if gid in self.settings:
             self.settings[gid]["recent_messages"] = []
+            self.settings[gid]["recent_answers"] = []
             save_settings(self.settings)
 
     def set_uniqueness_threshold(self, guild_id: int, threshold: float):
@@ -68,11 +67,32 @@ class DailyTaskManager:
         self.settings[gid]["uniqueness_threshold"] = max(0.0, min(1.0, float(threshold)))
         save_settings(self.settings)
 
-    def set_max_generation_attempts(self, guild_id: int, attempts: int):
+    def set_prompt(self, guild_id: int, prompt: str):
         gid = str(guild_id)
         if gid not in self.settings:
             self.settings[gid] = {}
-        self.settings[gid]["max_generation_attempts"] = max(1, int(attempts))
+        self.settings[gid]["prompt"] = prompt
+        save_settings(self.settings)
+
+    def set_interval(self, guild_id: int, hours: float):
+        gid = str(guild_id)
+        if gid not in self.settings:
+            self.settings[gid] = {}
+        self.settings[gid]["interval"] = hours
+        save_settings(self.settings)
+
+    def set_channel(self, guild_id: int, channel_id: int | None, random_mode: bool):
+        gid = str(guild_id)
+        if gid not in self.settings:
+            self.settings[gid] = {}
+
+        if random_mode:
+            self.settings[gid]["channel_mode"] = "random"
+            self.settings[gid]["channel_id"] = None
+        else:
+            self.settings[gid]["channel_mode"] = "fixed"
+            self.settings[gid]["channel_id"] = channel_id
+
         save_settings(self.settings)
 
     async def _run(self):
@@ -114,68 +134,67 @@ class DailyTaskManager:
             threshold = float(guild_settings.get("uniqueness_threshold", 0.6))
             max_attempts = int(guild_settings.get("max_generation_attempts", 30))
             recent_normed = [self._normalize(m) for m in self._get_recent_messages(gid)]
+            recent_answers = [a.lower() for a in self._get_recent_answers(gid)]
 
             msg = None
             last_candidate = None
-            for attempt in range(max_attempts):
-                if prompt:
-                    candidate = await generate_custom_prompt(prompt)
-                else:
-                    candidate = await generate_outrageous_message()
+            answer = None
 
+            for attempt in range(max_attempts):
+                candidate = await generate_custom_prompt(prompt) if prompt else await generate_outrageous_message()
                 last_candidate = candidate
 
                 if not isinstance(candidate, str) or not candidate.strip():
                     continue
 
-                is_dup = False
+                match = re.search(r"\|\|(.*?)\|\|", candidate)
+                candidate_answer = match.group(1).strip().lower() if match else None
+
+                if candidate_answer and candidate_answer in recent_answers:
+                    continue
+
                 cand_norm = self._normalize(candidate)
-                for rn in recent_normed:
-                    if rn == cand_norm:
-                        is_dup = True
-                        break
-                    if difflib.SequenceMatcher(None, rn, cand_norm).ratio() >= threshold:
-                        is_dup = True
-                        break
+                is_dup = any(difflib.SequenceMatcher(None, cand_norm, rn).ratio() >= threshold for rn in recent_normed)
+                if is_dup:
+                    continue
 
-                if not is_dup:
-                    msg = candidate
-                    break
+                msg = candidate
+                answer = candidate_answer
+                break
 
-            if msg is None:
-                if last_candidate is None:
-                    if prompt:
-                        last_candidate = await generate_custom_prompt(prompt)
-                    else:
-                        last_candidate = await generate_outrageous_message()
-
-                variant_index = 1
+            if msg is None and last_candidate:
                 candidate_base = last_candidate.strip()
-                candidate_norm = self._normalize(candidate_base)
+                variant_index = 1
                 while True:
                     variation = f" (variation {variant_index})"
                     test_msg = candidate_base + variation
                     test_norm = self._normalize(test_msg)
 
-                    if all(difflib.SequenceMatcher(None, test_norm, rn).ratio() < threshold for rn in recent_normed):
+                    match = re.search(r"\|\|(.*?)\|\|", test_msg)
+                    candidate_answer = match.group(1).strip().lower() if match else None
+                    if all(difflib.SequenceMatcher(None, test_norm, rn).ratio() < threshold for rn in recent_normed) \
+                            and (not candidate_answer or candidate_answer not in recent_answers):
                         msg = test_msg
+                        answer = candidate_answer
                         break
 
                     variant_index += 1
                     if variant_index > 20:
                         msg = test_msg
+                        answer = candidate_answer
                         break
 
-            try:
-                await channel.send(msg)
-            except Exception as e:
-                print(f"Could not send message to {guild.name}: {e}")
-                continue
+            if msg:
+                try:
+                    await channel.send(msg)
+                except Exception as e:
+                    print(f"Could not send message to {guild.name}: {e}")
+                    continue
 
-            guild_settings["last_sent"] = now
-            self.settings[gid] = guild_settings
-            self._save_recent_message(gid, msg)
-            save_settings(self.settings)
+                guild_settings["last_sent"] = now
+                self.settings[gid] = guild_settings
+                self._save_recent_message(gid, msg, answer)
+
 
     def start(self):
         if not self.task.is_running():
@@ -187,34 +206,6 @@ class DailyTaskManager:
 
     def is_running(self):
         return self.task.is_running()
-
-    def set_prompt(self, guild_id: int, prompt: str):
-        gid = str(guild_id)
-        if gid not in self.settings:
-            self.settings[gid] = {}
-        self.settings[gid]["prompt"] = prompt
-        save_settings(self.settings)
-
-    def set_interval(self, guild_id: int, hours: float):
-        gid = str(guild_id)
-        if gid not in self.settings:
-            self.settings[gid] = {}
-        self.settings[gid]["interval"] = hours
-        save_settings(self.settings)
-
-    def set_channel(self, guild_id: int, channel_id: int | None, random_mode: bool):
-        gid = str(guild_id)
-        if gid not in self.settings:
-            self.settings[gid] = {}
-
-        if random_mode:
-            self.settings[gid]["channel_mode"] = "random"
-            self.settings[gid]["channel_id"] = None
-        else:
-            self.settings[gid]["channel_mode"] = "fixed"
-            self.settings[gid]["channel_id"] = channel_id
-
-        save_settings(self.settings)
 
 
 _daily_task_manager = None

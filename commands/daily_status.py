@@ -59,7 +59,7 @@ class DailyStatus(commands.Cog):
             f"**Interval:** `{interval_text}`\n"
             f"**Prompt:** `{prompt}`\n"
             f"**Channel Mode:** `{channel_mode}`\n"
-            f"**Channel:** {channel_text}\n\n"
+            f"**Channel:** {channel_text}\n"
             f"**Uniqueness Threshold:** `{uniqueness}`"
         )
 

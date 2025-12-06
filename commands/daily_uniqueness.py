@@ -11,7 +11,7 @@ class DailyUniqueness(commands.Cog):
 
     @app_commands.command(
         name="daily_uniqueness",
-        description="Set how unique daily messages should be (0.0 – 1.0, higher = more strict uniqueness)."
+        description="Set how unique daily messages should be (0.0 – 1.0, higher = more strict uniqueness, default = 0.6)"
     )
     @app_commands.checks.has_permissions(administrator=True)
     async def daily_uniqueness(self, interaction: discord.Interaction, threshold: float):
@@ -25,8 +25,6 @@ class DailyUniqueness(commands.Cog):
 
         await interaction.response.send_message(
             f"Daily uniqueness threshold set to **{threshold:.2f}**.\n"
-            f"- **0.0** → extremely similar messages allowed\n"
-            f"- **1.0** → messages must be really different"
         )
 
 
