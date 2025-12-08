@@ -20,7 +20,9 @@ class SayVC(commands.Cog):
         try:
             # User must be in a voice channel
             if not interaction.user.voice:
-                await interaction.response.send_message("You must be in a voice channel to use this.")
+                await interaction.response.send_message(
+                    "You must be in a voice channel to use this."
+                )
                 return
 
             voice_channel = interaction.user.voice.channel
@@ -40,12 +42,12 @@ class SayVC(commands.Cog):
                 input=text
             )
 
-            filename = "voice_output_vc.mp3"
+            filename = "voice_output_vc.wav"
             audio.stream_to_file(filename)
 
             # Play the audio in VC
             if not vc.is_playing():
-                vc.play(discord.FFmpegPCMAudio(filename))
+                vc.play(discord.FFmpegPCMAudio(source=filename))
 
         except Exception as e:
             await interaction.followup.send("Failed to speak in voice channel.")

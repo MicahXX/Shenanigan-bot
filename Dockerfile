@@ -1,19 +1,20 @@
 FROM python:3.12-slim
 
-# Install FFmpeg 
+# Install FFmpeg with all necessary codecs
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get install -y ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
+# Copy requirements and install
 COPY requirements.txt .
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy bot code
 COPY . .
 
+# Run bot
 CMD ["python", "bot.py"]
