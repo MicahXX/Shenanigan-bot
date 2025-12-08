@@ -48,7 +48,7 @@ class SayVC(commands.Cog):
                 vc.play(discord.FFmpegPCMAudio(filename))
 
         except Exception as e:
-            await interaction.followup.send("❌ Failed to speak in voice channel.")
+            await interaction.followup.send("Failed to speak in voice channel.")
             print("VC Error:", repr(e))
 
 
