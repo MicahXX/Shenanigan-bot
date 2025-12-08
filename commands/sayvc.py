@@ -103,7 +103,7 @@ class SayVC(commands.Cog):
                 os.remove(wav_file)
 
         except Exception:
-            await interaction.followup.send("Failed to speak in voice channel.")
+            await interaction.followup.send("Failed to speak in voice channel.", ephemeral=True)
             traceback.print_exc()
 
 
