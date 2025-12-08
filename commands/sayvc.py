@@ -35,19 +35,16 @@ class SayVC(commands.Cog):
             else:
                 vc = await voice_channel.connect()
 
-            # Filenames for temporary files
             mp3_file = "temp_tts.mp3"
             wav_file = "temp_tts.wav"
 
-            # Generate TTS MP3 using OpenAI
-            audio = client_ai.audio.speech.create(
-                model="gpt-4o-mini-tts",
-                voice="alloy",
-                input=text
-            )
-            audio.stream_to_file(mp3_file)
+            with client_ai.audio.speech.with_streaming_response.create(
+                    model="gpt-4o-mini-tts",
+                    voice="alloy",
+                    input=text
+            ) as audio_stream:
+                audio_stream.stream_to_file(mp3_file)
 
-            # Convert MP3 → WAV PCM 48kHz stereo for Discord
             subprocess.run([
                 "ffmpeg", "-y", "-i", mp3_file,
                 "-ar", "48000", "-ac", "2", wav_file
@@ -56,12 +53,13 @@ class SayVC(commands.Cog):
             # Play WAV in VC
             if not vc.is_playing():
                 vc.play(discord.FFmpegPCMAudio(wav_file))
-                print(f"Playing audio: {wav_file}")
+                print(f"Playing audio in VC: {wav_file}")
 
                 # Wait until playback finishes
                 while vc.is_playing():
                     await asyncio.sleep(0.1)
 
+            # Cleanup temp files
             os.remove(mp3_file)
             os.remove(wav_file)
 
