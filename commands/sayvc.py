@@ -3,9 +3,9 @@ from discord import app_commands
 from discord.ext import commands
 import os
 from openai import OpenAI
+import subprocess
 
 client_ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 
 class SayVC(commands.Cog):
     def __init__(self, bot):
@@ -35,19 +35,28 @@ class SayVC(commands.Cog):
             else:
                 vc = await voice_channel.connect()
 
-            # Generate speech using OpenAI TTS
+            # Generate TTS using OpenAI
             audio = client_ai.audio.speech.create(
                 model="gpt-4o-mini-tts",
                 voice="alloy",
                 input=text
             )
 
-            filename = "voice_output_vc.wav"
-            audio.stream_to_file(filename)
+            mp3_file = "voice_output_vc.mp3"
+            wav_file = "voice_output_vc.wav"
 
-            # Play the audio in VC
+            # Save MP3
+            audio.stream_to_file(mp3_file)
+
+            # Convert to WAV for Discord playback
+            subprocess.run([
+                "ffmpeg", "-y", "-i", mp3_file, "-ar", "48000", "-ac", "2", wav_file
+            ], check=True)
+
+            # Play WAV in VC
             if not vc.is_playing():
-                vc.play(discord.FFmpegPCMAudio(source=filename))
+                vc.play(discord.FFmpegPCMAudio(source=wav_file))
+                print(f"Playing audio: {wav_file}")
 
         except Exception as e:
             await interaction.followup.send("Failed to speak in voice channel.")
