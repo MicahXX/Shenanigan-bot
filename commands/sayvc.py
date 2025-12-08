@@ -4,8 +4,8 @@ from discord.ext import commands
 import os
 from openai import OpenAI
 from io import BytesIO
-import asyncio
 import subprocess
+import asyncio
 
 client_ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -36,18 +36,19 @@ class SayVC(commands.Cog):
             else:
                 vc = await voice_channel.connect()
 
-            # Generate TTS using OpenAI
+            # Generate TTS MP3 using OpenAI
             audio = client_ai.audio.speech.create(
                 model="gpt-4o-mini-tts",
                 voice="alloy",
                 input=text
             )
 
-            # Stream audio into memory
+            # Read MP3 into memory
             mp3_bytes = BytesIO()
             audio.stream_to_file(mp3_bytes)
             mp3_bytes.seek(0)
 
+            # Convert MP3 → PCM 48kHz stereo in memory
             ffmpeg_proc = subprocess.Popen(
                 [
                     "ffmpeg",
@@ -58,19 +59,22 @@ class SayVC(commands.Cog):
                     "pipe:1"
                 ],
                 stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
+            pcm_data, ffmpeg_err = ffmpeg_proc.communicate(mp3_bytes.read())
 
-            pcm_data, _ = ffmpeg_proc.communicate(mp3_bytes.read())
+            if ffmpeg_proc.returncode != 0:
+                print("FFmpeg error:", ffmpeg_err.decode())
+                await interaction.followup.send("Failed to convert audio for playback.")
+                return
 
-            # Play the audio in VC
+            # Play in VC
             if not vc.is_playing():
-                vc.play(discord.FFmpegPCMAudio(
-                    source=BytesIO(pcm_data),
-                    pipe=True
-                ))
+                vc.play(discord.FFmpegPCMAudio(source=BytesIO(pcm_data), pipe=True))
+                print("Playing audio in VC...")
 
-                # Wait until playback finishes
+                # Wait until finished
                 while vc.is_playing():
                     await asyncio.sleep(0.1)
 
