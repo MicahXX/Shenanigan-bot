@@ -5,7 +5,6 @@ import os
 from openai import OpenAI
 from io import BytesIO
 import subprocess
-import asyncio
 
 client_ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -43,40 +42,21 @@ class SayVC(commands.Cog):
                 input=text
             )
 
-            # Read MP3 into memory
+            # Stream MP3 bytes into FFmpeg directly, output PCM to Discord
             mp3_bytes = BytesIO()
             audio.stream_to_file(mp3_bytes)
             mp3_bytes.seek(0)
 
-            # Convert MP3 → PCM 48kHz stereo in memory
-            ffmpeg_proc = subprocess.Popen(
-                [
-                    "ffmpeg",
-                    "-i", "pipe:0",
-                    "-f", "s16le",
-                    "-ar", "48000",
-                    "-ac", "2",
-                    "pipe:1"
-                ],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+            ffmpeg_audio = discord.FFmpegPCMAudio(
+                source=mp3_bytes,
+                pipe=True,
+                before_options="-nostdin",
+                options="-ar 48000 -ac 2"
             )
-            pcm_data, ffmpeg_err = ffmpeg_proc.communicate(mp3_bytes.read())
 
-            if ffmpeg_proc.returncode != 0:
-                print("FFmpeg error:", ffmpeg_err.decode())
-                await interaction.followup.send("Failed to convert audio for playback.")
-                return
-
-            # Play in VC
             if not vc.is_playing():
-                vc.play(discord.FFmpegPCMAudio(source=BytesIO(pcm_data), pipe=True))
-                print("Playing audio in VC...")
-
-                # Wait until finished
-                while vc.is_playing():
-                    await asyncio.sleep(0.1)
+                vc.play(ffmpeg_audio)
+                print("Streaming audio to VC...")
 
         except Exception as e:
             await interaction.followup.send("Failed to speak in voice channel.")
