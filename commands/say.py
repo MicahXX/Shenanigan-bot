@@ -20,7 +20,7 @@ class Say(commands.Cog):
         try:
             await interaction.response.send_message("Generating voice...")
 
-            # Generate AI speech
+            # Generate speech
             audio = client_ai.audio.speech.create(
                 model="gpt-4o-mini-tts",
                 voice="alloy",
@@ -28,11 +28,11 @@ class Say(commands.Cog):
             )
 
             filename = "voice_output.mp3"
-            audio.with_streaming_response.method(filename)
+            audio.stream_to_file(filename)
 
-            # Upload MP3 to Discord
+            # Upload the file to Discord
             await interaction.followup.send(
-                content="🔊 Here's your AI voice:",
+                content="Here's your AI voice:",
                 file=discord.File(filename)
             )
 
