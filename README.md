@@ -1,41 +1,59 @@
 # Shenanigan-bot
 
-A small Discord bot that uses ChatGPT to send an obscure / entertaining message every 24 hours (or on demand via a slash command) and the ability to prompt whenever with gpt-4o. Built in Python. 
+A modular Discord bot using ChatGPT/gpt-4o to deliver hilarious, obscure, and custom AI messages on demand or automatically. Built in Python.  
 Add bot: https://discord.com/oauth2/authorize?client_id=1446220110363885578
 
 ## Features
 
-- Sends an automated "shenanigan" message once every 24 hours.
-- Responds to a slash command to generate an on-demand message via ChatGPT.
-- Responds to a slash command to answer an user prompt.
-- Modular structure with a commands folder to add more commands.
-- Simple task scheduler for recurring messages.
+- Sends an automated "shenanigan" message once every 24 hours (default: off).
+- Can be used to just prompt the ai.
+- Extensive admin commands to control scheduling, content, and delivery.
+- Simple task scheduler for recurring and custom-timed events.
+- Supports setting the prompt, frequency, channel, and message uniqueness threshold.
+- Uses gpt-4o via OpenAI for responses.
+- Admin-only commands for configuration and testing.
 
 ## Files 
 
-- `bot.py` — Bot entrypoint and Discord client initialization.
-- `ai.py` — ChatGPT / AI helper utilities.
-- `tasks.py` — Scheduled tasks (24-hour message).
-- `extensions.py` — Bot extension/utility loading.
-- `commands/` — Directory for command modules (slash commands).
+- `bot.py` — Entrypoint and Discord client initialization.
+- `ai.py` — ChatGPT/OpenAI integration and AI helper utilities.
+- `tasks.py` — Scheduled tasks (24-hour and custom interval messages).
+- `extensions.py` — Extension and command loader.
+- `commands/` — Slash command modules.
 - `requirements.txt` — Python dependencies.
+- `utils/` — Helper utilities (e.g. settings storage).
 
 ## Slash Commands
 
 **/outrageous**  
-Get an outrageous, funny, or wild AI-generated message from the bot.
+Get a random, wild, or funny AI-generated message.
 
-**/prompt [your prompt]**  
-Use ChatGPT to answer your custom prompt, gpt-4o.
+**/prompt [text]**  
+Send a custom prompt to ChatGPT (gpt-4o).
 
 **/daily_enable**  
-Enable the daily automated message in the current server.
+Enable daily automated messages for this server (admin only).
 
 **/daily_disable**  
-Disable the daily automated message in the current server.
+Disable daily automated messages for this server (admin only).
 
 **/daily_status**  
-Check whether the daily automated message is enabled in your server.
+Show the current daily message settings for your server, including enabled state, interval, prompt, channel mode, channel, and uniqueness threshold (admin only).
+
+**/daily_test**  
+Send the daily message immediately (useful for testing configurations, admin only).
+
+**/daily_customtime [interval]**  
+Set how often the daily message runs (supports times like `30s`, `5m`, `2h`, `1d`, `2h30m`, `1d4h20m10s`) (admin only).
+
+**/daily_channel [mode] [channel]**  
+Configure which channel daily messages use: “random” channel or a fixed specified channel (admin only).
+
+**/daily_uniqueness [threshold]**  
+Set how unique daily messages should be (from 0.0 to 1.0, where higher is stricter, default = 0.6) (admin only).
+
+**/daily_prompt [prompt]**  
+Set a custom daily prompt that overrides the default outrageous message prompt (admin only).
 
 ## Prerequisites
 
@@ -88,7 +106,7 @@ What the bot does after startup:
 ## Development notes
 
 - Add new slash commands by creating modules in the `commands/` directory.
-- `ai.py` contains the integration with the language model — adjust prompt templates and parameters there.
+- `ai.py` contains the integration with the language model, adjust prompt templates and parameters there.
 - `tasks.py` manages the scheduled job; change frequency or behavior there.
 - The repository is private and currently does not include a license file.
 
@@ -113,3 +131,7 @@ What the bot does after startup:
 ## Author
 
 Made by MicahCode(MicahXX)
+
+## License
+
+MIT License – See LICENSE file for details.
