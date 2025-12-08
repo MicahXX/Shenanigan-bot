@@ -18,7 +18,7 @@ class Say(commands.Cog):
     @app_commands.describe(text="What do you want the AI to say?")
     async def say(self, interaction: discord.Interaction, text: str):
         try:
-            await interaction.response.send_message("Generating voice...")
+            await interaction.response.send_message("Generating ai voice...", ephemeral=True)
 
             # Generate speech
             audio = client_ai.audio.speech.create(
@@ -32,7 +32,6 @@ class Say(commands.Cog):
 
             # Upload the file to Discord
             await interaction.followup.send(
-                content="Here's your AI voice:",
                 file=discord.File(filename)
             )
 
