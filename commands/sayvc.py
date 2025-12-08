@@ -20,7 +20,6 @@ class SayVC(commands.Cog):
     @app_commands.describe(text="What do you want the AI to say?")
     async def sayvc(self, interaction: discord.Interaction, text: str):
         try:
-            # Ensure user is in a voice channel
             if not interaction.user.voice or not interaction.user.voice.channel:
                 await interaction.response.send_message(
                     "You must be in a voice channel to use this."
@@ -28,19 +27,21 @@ class SayVC(commands.Cog):
                 return
 
             voice_channel = interaction.user.voice.channel
-            await interaction.response.send_message(f"Joining {voice_channel.name}...")
-
-            # Connect bot to VC
             vc = interaction.guild.voice_client
+
             if vc is None:
+                await interaction.response.send_message(f"Joining {voice_channel.name}...")
                 vc = await voice_channel.connect()
             else:
-                await vc.move_to(voice_channel)
+                if vc.channel != voice_channel:
+                    await vc.move_to(voice_channel)
+                else:
+                    await interaction.response.send_message("Already connected, speaking now...", ephemeral=True)
 
             mp3_file = "temp_tts.mp3"
             wav_file = "temp_tts.wav"
 
-            # Stream TTS from OpenAI
+            # Stream TTS to MP3
             with client_ai.audio.speech.with_streaming_response.create(
                     model="gpt-4o-mini-tts",
                     voice="alloy",
@@ -48,27 +49,27 @@ class SayVC(commands.Cog):
             ) as audio_stream:
                 audio_stream.stream_to_file(mp3_file)
 
-            subprocess.run([
-                "ffmpeg", "-y", "-i", mp3_file,
-                "-ar", "48000", "-ac", "2", wav_file
-            ], check=True)
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", mp3_file, "-ar", "48000", "-ac", "2", wav_file],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
 
-            # Play audio in VC
+            await asyncio.sleep(0.1)
+
+            # Play in VC
             if not vc.is_playing():
                 vc.play(discord.FFmpegPCMAudio(wav_file))
-                print(f"Playing audio in VC: {wav_file}")
 
-                # Wait for playback to finish
                 while vc.is_playing():
                     await asyncio.sleep(0.1)
 
-            # Cleanup temp files
             os.remove(mp3_file)
             os.remove(wav_file)
 
-        except Exception as e:
+        except Exception:
             await interaction.followup.send("Failed to speak in voice channel.")
-            print("VC Error:")
             traceback.print_exc()
 
 
