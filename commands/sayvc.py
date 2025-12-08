@@ -9,6 +9,22 @@ import traceback
 
 client_ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+MAX_CHARS_PER_CHUNK = 125
+
+def split_text_into_chunks(text, max_chars=MAX_CHARS_PER_CHUNK):
+    words = text.split()
+    chunks = []
+    current = ""
+    for word in words:
+        if len(current) + len(word) + 1 > max_chars:
+            chunks.append(current.strip())
+            current = word + " "
+        else:
+            current += word + " "
+    if current:
+        chunks.append(current.strip())
+    return chunks
+
 class SayVC(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -23,7 +39,7 @@ class SayVC(commands.Cog):
                 print(f"Left VC {vc.channel.name} in guild {vc.guild.name} because nobody is left.")
                 self.guild_vcs.pop(vc.guild.id, None)
                 break
-            await asyncio.sleep(5)  # check every 5 seconds
+            await asyncio.sleep(5)
 
     @app_commands.command(
         name="sayvc",
@@ -54,35 +70,37 @@ class SayVC(commands.Cog):
                         "speaking...", ephemeral=True
                     )
 
-            mp3_file = "temp_tts.mp3"
-            wav_file = "temp_tts.wav"
+            # Split text into manageable chunks
+            chunks = split_text_into_chunks(text)
 
-            # Stream TTS from OpenAI
-            with client_ai.audio.speech.with_streaming_response.create(
-                    model="gpt-4o-mini-tts",
-                    voice="alloy",
-                    input=text
-            ) as audio_stream:
-                audio_stream.stream_to_file(mp3_file)
+            for i, chunk in enumerate(chunks):
+                mp3_file = f"temp_tts_{i}.mp3"
+                wav_file = f"temp_tts_{i}.wav"
 
-            subprocess.run(
-                ["ffmpeg", "-y", "-i", mp3_file, "-ar", "48000", "-ac", "2", wav_file],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
+                # Generate TTS
+                with client_ai.audio.speech.with_streaming_response.create(
+                        model="gpt-4o-mini-tts",
+                        voice="alloy",
+                        input=chunk
+                ) as audio_stream:
+                    audio_stream.stream_to_file(mp3_file)
 
-            await asyncio.sleep(0.1)
+                # Convert to WAV for Discord
+                subprocess.run(
+                    ["ffmpeg", "-y", "-i", mp3_file, "-ar", "48000", "-ac", "2", wav_file],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
 
-            # Play in VC
-            if not vc.is_playing():
-                vc.play(discord.FFmpegPCMAudio(wav_file))
+                if not vc.is_playing():
+                    vc.play(discord.FFmpegPCMAudio(wav_file))
 
-                while vc.is_playing():
-                    await asyncio.sleep(0.1)
+                    while vc.is_playing():
+                        await asyncio.sleep(0.1)
 
-            os.remove(mp3_file)
-            os.remove(wav_file)
+                os.remove(mp3_file)
+                os.remove(wav_file)
 
         except Exception:
             await interaction.followup.send("Failed to speak in voice channel.")
