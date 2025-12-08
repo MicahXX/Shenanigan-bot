@@ -3,6 +3,8 @@ from discord import app_commands
 from discord.ext import commands
 import os
 from openai import OpenAI
+from io import BytesIO
+import asyncio
 import subprocess
 
 client_ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -18,7 +20,6 @@ class SayVC(commands.Cog):
     @app_commands.describe(text="What do you want the AI to say?")
     async def sayvc(self, interaction: discord.Interaction, text: str):
         try:
-            # User must be in a voice channel
             if not interaction.user.voice:
                 await interaction.response.send_message(
                     "You must be in a voice channel to use this."
@@ -42,21 +43,36 @@ class SayVC(commands.Cog):
                 input=text
             )
 
-            mp3_file = "voice_output_vc.mp3"
-            wav_file = "voice_output_vc.wav"
+            # Stream audio into memory
+            mp3_bytes = BytesIO()
+            audio.stream_to_file(mp3_bytes)
+            mp3_bytes.seek(0)
 
-            # Save MP3
-            audio.stream_to_file(mp3_file)
+            ffmpeg_proc = subprocess.Popen(
+                [
+                    "ffmpeg",
+                    "-i", "pipe:0",
+                    "-f", "s16le",
+                    "-ar", "48000",
+                    "-ac", "2",
+                    "pipe:1"
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE
+            )
 
-            # Convert to WAV for Discord playback
-            subprocess.run([
-                "ffmpeg", "-y", "-i", mp3_file, "-ar", "48000", "-ac", "2", wav_file
-            ], check=True)
+            pcm_data, _ = ffmpeg_proc.communicate(mp3_bytes.read())
 
-            # Play WAV in VC
+            # Play the audio in VC
             if not vc.is_playing():
-                vc.play(discord.FFmpegPCMAudio(source=wav_file))
-                print(f"Playing audio: {wav_file}")
+                vc.play(discord.FFmpegPCMAudio(
+                    source=BytesIO(pcm_data),
+                    pipe=True
+                ))
+
+                # Wait until playback finishes
+                while vc.is_playing():
+                    await asyncio.sleep(0.1)
 
         except Exception as e:
             await interaction.followup.send("Failed to speak in voice channel.")
