@@ -9,7 +9,7 @@ import traceback
 
 client_ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-MAX_CHARS_PER_CHUNK = 125
+MAX_CHARS_PER_CHUNK = 300
 
 def split_text_into_chunks(text, max_chars=MAX_CHARS_PER_CHUNK):
     words = text.split()
@@ -28,7 +28,7 @@ def split_text_into_chunks(text, max_chars=MAX_CHARS_PER_CHUNK):
 class SayVC(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.guild_vcs = {}  # track VC per guild
+        self.guild_vcs = {}
 
     async def auto_disconnect(self, vc: discord.VoiceClient):
         await asyncio.sleep(1)
@@ -70,8 +70,9 @@ class SayVC(commands.Cog):
                         "speaking...", ephemeral=True
                     )
 
-            # Split text into manageable chunks
-            chunks = split_text_into_chunks(text)
+            text_to_speak = f"{interaction.user.display_name} says: {text}"
+
+            chunks = split_text_into_chunks(text_to_speak)
 
             for i, chunk in enumerate(chunks):
                 mp3_file = f"temp_tts_{i}.mp3"
@@ -85,7 +86,6 @@ class SayVC(commands.Cog):
                 ) as audio_stream:
                     audio_stream.stream_to_file(mp3_file)
 
-                # Convert to WAV for Discord
                 subprocess.run(
                     ["ffmpeg", "-y", "-i", mp3_file, "-ar", "48000", "-ac", "2", wav_file],
                     check=True,
