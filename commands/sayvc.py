@@ -3,8 +3,8 @@ from discord import app_commands
 from discord.ext import commands
 import os
 from openai import OpenAI
-from io import BytesIO
 import subprocess
+import asyncio
 
 client_ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -35,28 +35,35 @@ class SayVC(commands.Cog):
             else:
                 vc = await voice_channel.connect()
 
+            # Filenames for temporary files
+            mp3_file = "temp_tts.mp3"
+            wav_file = "temp_tts.wav"
+
             # Generate TTS MP3 using OpenAI
             audio = client_ai.audio.speech.create(
                 model="gpt-4o-mini-tts",
                 voice="alloy",
                 input=text
             )
+            audio.stream_to_file(mp3_file)
 
-            # Stream MP3 bytes into FFmpeg directly, output PCM to Discord
-            mp3_bytes = BytesIO()
-            audio.stream_to_file(mp3_bytes)
-            mp3_bytes.seek(0)
+            # Convert MP3 → WAV PCM 48kHz stereo for Discord
+            subprocess.run([
+                "ffmpeg", "-y", "-i", mp3_file,
+                "-ar", "48000", "-ac", "2", wav_file
+            ], check=True)
 
-            ffmpeg_audio = discord.FFmpegPCMAudio(
-                source=mp3_bytes,
-                pipe=True,
-                before_options="-nostdin",
-                options="-ar 48000 -ac 2"
-            )
-
+            # Play WAV in VC
             if not vc.is_playing():
-                vc.play(ffmpeg_audio)
-                print("Streaming audio to VC...")
+                vc.play(discord.FFmpegPCMAudio(wav_file))
+                print(f"Playing audio: {wav_file}")
+
+                # Wait until playback finishes
+                while vc.is_playing():
+                    await asyncio.sleep(0.1)
+
+            os.remove(mp3_file)
+            os.remove(wav_file)
 
         except Exception as e:
             await interaction.followup.send("Failed to speak in voice channel.")
