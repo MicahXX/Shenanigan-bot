@@ -42,7 +42,7 @@ class SayVC(commands.Cog):
             vc = interaction.guild.voice_client
 
             if vc is None:
-                await interaction.response.send_message(f"Joining {voice_channel.name}...")
+                await interaction.response.send_message(f"Joining {voice_channel.name}...", ephemeral=True)
                 vc = await voice_channel.connect()
                 self.guild_vcs[interaction.guild.id] = vc
             else:
@@ -50,7 +50,7 @@ class SayVC(commands.Cog):
                     await vc.move_to(voice_channel)
                 else:
                     await interaction.response.send_message(
-                        "Already connected, speaking now...", ephemeral=True
+                        "speaking...", ephemeral=True
                     )
 
             mp3_file = "temp_tts.mp3"
