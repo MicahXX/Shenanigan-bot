@@ -34,7 +34,7 @@ class SayVC(commands.Cog):
         try:
             if not interaction.user.voice or not interaction.user.voice.channel:
                 await interaction.response.send_message(
-                    "You must be in a voice channel to use this."
+                    "You must be in a voice channel to use this.", ephemeral=True
                 )
                 return
 
@@ -45,6 +45,7 @@ class SayVC(commands.Cog):
                 await interaction.response.send_message(f"Joining {voice_channel.name}...", ephemeral=True)
                 vc = await voice_channel.connect()
                 self.guild_vcs[interaction.guild.id] = vc
+                self.bot.loop.create_task(self.auto_disconnect(vc))
             else:
                 if vc.channel != voice_channel:
                     await vc.move_to(voice_channel)
@@ -71,7 +72,7 @@ class SayVC(commands.Cog):
                 stderr=subprocess.DEVNULL
             )
 
-            await asyncio.sleep(0.1)  # ensure VC is ready
+            await asyncio.sleep(0.1)
 
             # Play in VC
             if not vc.is_playing():
@@ -82,10 +83,6 @@ class SayVC(commands.Cog):
 
             os.remove(mp3_file)
             os.remove(wav_file)
-
-            if vc.guild.id not in self.guild_vcs:
-                self.bot.loop.create_task(self.auto_disconnect(vc))
-                self.guild_vcs[vc.guild.id] = vc
 
         except Exception:
             await interaction.followup.send("Failed to speak in voice channel.")
