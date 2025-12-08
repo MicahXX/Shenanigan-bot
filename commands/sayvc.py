@@ -5,6 +5,7 @@ import os
 from openai import OpenAI
 import subprocess
 import asyncio
+import traceback
 
 client_ai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -19,7 +20,8 @@ class SayVC(commands.Cog):
     @app_commands.describe(text="What do you want the AI to say?")
     async def sayvc(self, interaction: discord.Interaction, text: str):
         try:
-            if not interaction.user.voice:
+            # Ensure user is in a voice channel
+            if not interaction.user.voice or not interaction.user.voice.channel:
                 await interaction.response.send_message(
                     "You must be in a voice channel to use this."
                 )
@@ -29,15 +31,16 @@ class SayVC(commands.Cog):
             await interaction.response.send_message(f"Joining {voice_channel.name}...")
 
             # Connect bot to VC
-            if interaction.guild.voice_client:
-                vc = interaction.guild.voice_client
-                await vc.move_to(voice_channel)
-            else:
+            vc = interaction.guild.voice_client
+            if vc is None:
                 vc = await voice_channel.connect()
+            else:
+                await vc.move_to(voice_channel)
 
             mp3_file = "temp_tts.mp3"
             wav_file = "temp_tts.wav"
 
+            # Stream TTS from OpenAI
             with client_ai.audio.speech.with_streaming_response.create(
                     model="gpt-4o-mini-tts",
                     voice="alloy",
@@ -50,12 +53,12 @@ class SayVC(commands.Cog):
                 "-ar", "48000", "-ac", "2", wav_file
             ], check=True)
 
-            # Play WAV in VC
+            # Play audio in VC
             if not vc.is_playing():
                 vc.play(discord.FFmpegPCMAudio(wav_file))
                 print(f"Playing audio in VC: {wav_file}")
 
-                # Wait until playback finishes
+                # Wait for playback to finish
                 while vc.is_playing():
                     await asyncio.sleep(0.1)
 
@@ -65,7 +68,8 @@ class SayVC(commands.Cog):
 
         except Exception as e:
             await interaction.followup.send("Failed to speak in voice channel.")
-            print("VC Error:", repr(e))
+            print("VC Error:")
+            traceback.print_exc()
 
 
 async def setup(bot):
