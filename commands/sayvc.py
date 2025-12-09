@@ -37,7 +37,6 @@ class SayVC(commands.Cog):
             non_bot_members = [m for m in vc.channel.members if not m.bot]
             if len(non_bot_members) == 0:
                 await vc.disconnect()
-                print(f"Left VC {vc.channel.name} in guild {vc.guild.name} because nobody is left.")
                 self.guild_vcs.pop(vc.guild.id, None)
                 break
             await asyncio.sleep(5)
@@ -56,10 +55,18 @@ class SayVC(commands.Cog):
                 return
 
             voice_channel = interaction.user.voice.channel
+
+            if interaction.channel.id != voice_channel.id:
+                await interaction.response.send_message(
+                    f"You must use this command in {voice_channel.mention}.",
+                    ephemeral=True
+                )
+                return
+
             vc = interaction.guild.voice_client
 
             await interaction.response.send_message(
-                f"🎤 **Voice message requested by:** {interaction.user.mention}\n"
+                f"**Voice message requested by:** {interaction.user.mention}\n"
                 f"Speaking in **{voice_channel.name}**...",
                 ephemeral=False
             )
