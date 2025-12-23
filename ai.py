@@ -8,6 +8,11 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 async def generate_outrageous_message():
     return await _run_prompt("Generate one short, ridiculous, extremely outrageous statement.")
 
+async def generate_christmas_message():
+    return await _run_prompt("Generate a short, interesting Christmas fact."
+                             " It should be accurate, easy to understand,"
+                             " and related to Christmas traditions, history, culture,"
+                             " or surprising trivia.")
 
 async def generate_custom_prompt(user_prompt: str):
     return await _run_prompt(user_prompt)
