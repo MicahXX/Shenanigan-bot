@@ -14,6 +14,9 @@ async def generate_christmas_message():
                              " and related to Christmas traditions, history, culture,"
                              " or surprising trivia.")
 
+async def generate_christmastree_message():
+    return await _run_prompt("Generate a christmas tree, just the tree no text.")
+
 async def generate_custom_prompt(user_prompt: str):
     return await _run_prompt(user_prompt)
 
