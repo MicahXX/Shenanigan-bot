@@ -14,7 +14,7 @@ class Christmastree(commands.Cog):
     )
     async def christmastree(self, interaction: discord.Interaction):
         try:
-            msg = await generate_christmas_message()
+            msg = await generate_christmastree_message()
             await interaction.response.send_message(msg)
         except Exception as e:
             await interaction.response.send_message("Failed to generate christmas tree message!")
